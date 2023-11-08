@@ -1,0 +1,13 @@
+.idea/**
+*.iml
+/.vscode
+
+**/node_modules
+**/dist
+**/vendor
+
+lerna-debug.log
+
+.DS_Store
+.AppleDouble
+.LSOverride
