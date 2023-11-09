@@ -18,8 +18,8 @@ program
         await lernaInstance.exec(program.args)
       }
     } catch (e) {
+      console.error(e)
       await lernaInstance.cleanPhpPackages()
-      //console.error(e)
     }
   })
 
