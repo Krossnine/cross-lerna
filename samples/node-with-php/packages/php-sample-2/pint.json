@@ -1,0 +1,14 @@
+{
+  "preset": "laravel",
+  "rules": {
+    "ordered_imports": {
+      "sort_algorithm": "alpha"
+    },
+    "trailing_comma_in_multiline": true
+  },
+  "exclude": [
+    "bootstrap",
+    "storage",
+    "var"
+  ]
+}

@@ -49,6 +49,7 @@
     ]
   },
   "scripts": {
+    "clean": "npx rimraf node_modules dist",
     "prepare": "husky install",
     "lint": "eslint --fix --ext .ts src",
     "build": "tsc",
