@@ -58,8 +58,7 @@
   "dependencies": {
     "@commander-js/extra-typings": "^11.1.0",
     "commander": "^11.1.0",
-    "glob": "^10.3.10",
-    "lerna": "^7.2.0"
+    "glob": "^10.3.10"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.8.0",
