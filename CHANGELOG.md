@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/Krossnine/cross-lerna/compare/v1.2.0...v1.3.0) (2023-11-10)
+
+
+### Features
+
+* perform automatic php composer install ([7b72837](https://github.com/Krossnine/cross-lerna/commit/7b728379a2d3f6725f4b1dc285a47287e4ef5c16))
+
 # [1.2.0](https://github.com/Krossnine/cross-lerna/compare/v1.1.0...v1.2.0) (2023-11-10)
 
 

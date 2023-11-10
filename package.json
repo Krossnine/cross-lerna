@@ -1,6 +1,6 @@
 {
   "name": "cross-lerna",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Enabling Lerna to work seamlessly with both Node.js and PHP",
   "license": "MIT",
   "author": "Jeremy Wallez <jeremy.wallez@gmail.com>",
