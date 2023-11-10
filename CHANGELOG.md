@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Krossnine/cross-lerna/compare/v1.0.2...v1.1.0) (2023-11-10)
+
+
+### Features
+
+* add ansi mode for php/composer install ([8b2a244](https://github.com/Krossnine/cross-lerna/commit/8b2a244895fe67d0c42b4b6193a79fa22ba5ccb0))
+
 ## [1.0.2](https://github.com/Krossnine/cross-lerna/compare/v1.0.1...v1.0.2) (2023-11-09)
 
 
