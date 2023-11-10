@@ -62,7 +62,7 @@ export async function lerna(directory: string) {
   async function install() {
     for (const composerFilePath of context.composerFilePaths) {
       const composerPackageDirectory = path.dirname(composerFilePath)
-      const lernaCommand = `cd ${composerPackageDirectory} && composer install`
+      const lernaCommand = `cd ${composerPackageDirectory} && composer install --ansi`
       await executeCommand(lernaCommand)
     }
   }
