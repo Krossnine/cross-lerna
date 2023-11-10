@@ -1,6 +1,6 @@
 #! /usr/bin/env node
-import { Command } from '@commander-js/extra-typings'
-import { lerna } from './lerna'
+import {Command} from '@commander-js/extra-typings'
+import {lerna} from './lerna'
 
 const program = new Command()
 
@@ -11,23 +11,12 @@ program
   .option('--node-scope <nodeScope>', 'Run command accross node packages', 'true')
   .option('--php-scope <onlyPhp>', 'Run command accross php packages', 'true')
   .allowUnknownOption()
-  .action(async (command, options) => {
+  .action(async (_, options) => {
     const lernaInstance = await lerna(options.currentDir)
-    const lernaExecScope = {
+    await lernaInstance.exec(program.args, {
       nodeScope: /true/i.test(options.nodeScope),
       phpScope: /true/i.test(options.phpScope),
-    }
-    console.log(lernaExecScope)
-    try {
-      if (command === 'install') {
-        await lernaInstance.install()
-      } else {
-        await lernaInstance.exec(program.args, lernaExecScope)
-      }
-    } catch (e) {
-      console.error(e)
-      await lernaInstance.cleanPhpPackages()
-    }
+    })
   })
 
 program.parse()

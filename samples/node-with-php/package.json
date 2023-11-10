@@ -8,12 +8,11 @@
   },
   "scripts": {
     "clean": "npx lerna clean -y && npx rimraf --glob **/vendor --glob **/node_modules",
-    "install": "cross-lerna install",
     "test": "cross-lerna run test --parallel",
     "lint": "cross-lerna run lint --parallel"
   },
   "devDependencies": {
     "lerna": "^7.1.5",
-    "cross-lerna": "^1.1.0"
+    "cross-lerna": "latest"
   }
 }

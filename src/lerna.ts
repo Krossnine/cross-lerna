@@ -112,26 +112,33 @@ export async function lerna(directory: string) {
     }
   }
 
-  async function exec(args: Array<string>, lernaScope: LernaExecScope) {
-    await (lernaScope.phpScope ? preparePhpPackages() : cleanPhpPackages())
-    const filterPackagesArgs = lernaScope.nodeScope
-      ? []
-      : nodePackages.map((nodePackage) => `--ignore ${nodePackage.name}`)
-    const lernaCommand = `cd ${directory} && npx lerna ${args.concat(filterPackagesArgs).join(' ')}`
-    await executeCommand(lernaCommand)
-    await cleanPhpPackages()
-  }
-
-  async function install() {
+  async function installPhpPackages() {
     for (const packageInfo of phpPackages) {
       const lernaCommand = `cd ${packageInfo.path} && composer install --ansi`
       await executeCommand(lernaCommand)
     }
   }
 
+  async function exec(args: Array<string>, lernaScope: LernaExecScope) {
+    try {
+      if (lernaScope.phpScope) {
+        await preparePhpPackages();
+        await installPhpPackages()
+      } else {
+        await cleanPhpPackages();
+      }
+      const filterPackagesArgs = lernaScope.nodeScope
+        ? []
+        : nodePackages.map((nodePackage) => `--ignore ${nodePackage.name}`)
+      const lernaCommand = `cd ${directory} && npx lerna ${args.concat(filterPackagesArgs).join(' ')}`
+      await executeCommand(lernaCommand)
+      await cleanPhpPackages()
+    } catch(err) {
+      await cleanPhpPackages()
+    }
+  }
+
   return {
     exec,
-    install,
-    cleanPhpPackages,
   }
 }
