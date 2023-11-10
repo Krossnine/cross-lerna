@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/Krossnine/cross-lerna/compare/v1.1.0...v1.2.0) (2023-11-10)
+
+
+### Features
+
+* allow cross-lerna to run only php or node packages ([d4594d2](https://github.com/Krossnine/cross-lerna/commit/d4594d20c68ef664445360f0722ba6207eb41c73))
+
 # [1.1.0](https://github.com/Krossnine/cross-lerna/compare/v1.0.2...v1.1.0) (2023-11-10)
 
 
