@@ -8,7 +8,16 @@ export async function ensureFile(filepath: string) {
   }
 }
 
-export async function openJsonFile(filepath: string) {
+export async function fileExists(filepath: string): Promise<boolean> {
+  try {
+    await fs.access(filepath, fs.constants.F_OK)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+export async function openJsonFile(filepath: string): Promise<object> {
   return JSON.parse(await fs.readFile(filepath, 'utf-8'))
 }
 
@@ -17,5 +26,9 @@ export async function createJsonFile(filepath: string, content: object) {
 }
 
 export async function deleteFile(filePath: string) {
-  await fs.unlink(filePath)
+  try {
+    await fs.unlink(filePath)
+  } catch {
+    return
+  }
 }

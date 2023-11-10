@@ -1,4 +1,4 @@
-import { ensureFile, openJsonFile, createJsonFile, deleteFile } from './file'
+import { createJsonFile, deleteFile, ensureFile, fileExists, openJsonFile } from './file'
 import { executeCommand } from './command'
 import { glob } from 'glob'
 import path from 'path'
@@ -7,62 +7,124 @@ const COMPOSER_FILENAME = 'composer.json'
 const LERNA_FILENAME = 'lerna.json'
 const PACKAGE_FILENAME = 'package.json'
 
-async function initContext(directory: string) {
+enum PackageType {
+  PHP = 'PHP',
+  NODE = 'NODE',
+}
+
+interface PackageDescriptor {
+  name: string
+  version: string
+  scripts: object
+  workspaces: {
+    packages: Array<string>
+  }
+}
+
+interface PackageInfo {
+  name: string
+  version: string
+  scripts: object
+  path: string
+  descriptorFilePath: string
+  packageFilePath: string
+  type: PackageType
+}
+
+async function openPackageDescriptor(descriptorFilePath: string): Promise<PackageDescriptor> {
+  const descriptorContent = (await openJsonFile(descriptorFilePath)) as PackageDescriptor
+  return {
+    name: descriptorContent.name || '',
+    version: descriptorContent.version || '',
+    scripts: descriptorContent.scripts || {},
+    workspaces: descriptorContent.workspaces?.packages ? descriptorContent.workspaces : { packages: [] },
+  }
+}
+
+async function parsePackage(packagePath: string): Promise<PackageInfo> {
+  const composerFilePath = path.join(packagePath, COMPOSER_FILENAME)
+  const packageFilePath = path.join(packagePath, PACKAGE_FILENAME)
+  const composerExists = await fileExists(composerFilePath)
+  const type = composerExists ? PackageType.PHP : PackageType.NODE
+  const descriptorFilePath = type === PackageType.PHP ? composerFilePath : packageFilePath
+  const descriptorFileContent = (await openPackageDescriptor(descriptorFilePath)) as PackageDescriptor
+
+  return {
+    name: descriptorFileContent.name,
+    version: descriptorFileContent.version,
+    scripts: descriptorFileContent.scripts,
+    path: packagePath,
+    descriptorFilePath,
+    packageFilePath,
+    type,
+  }
+}
+
+async function parseGlobPackages(directory: string, globPattern: string): Promise<Array<PackageInfo>> {
+  const descriptorFilePaths = await glob(`/${globPattern}`, { root: directory })
+  return Promise.all(descriptorFilePaths.map(parsePackage))
+}
+
+async function parsePackages(directory: string): Promise<Array<PackageInfo>> {
   const lernaFilePath = path.join(directory, LERNA_FILENAME)
   const rootPackageFilePath = path.join(directory, PACKAGE_FILENAME)
   await ensureFile(lernaFilePath)
   await ensureFile(rootPackageFilePath)
 
-  const rootPackage = await openJsonFile(rootPackageFilePath)
-  const globPatterns = rootPackage?.workspaces?.packages
-  const findPhpPackage = (globPattern: string) => glob(`/${globPattern}/${COMPOSER_FILENAME}`, { root: directory })
-  const composerFilePaths = await Promise.all(globPatterns.map(findPhpPackage)).then((x) => x.flat(Infinity))
-
-  return {
-    composerFilePaths,
+  const rootPackage = (await openPackageDescriptor(rootPackageFilePath)) as PackageDescriptor
+  const globPatterns = rootPackage.workspaces.packages
+  let packages: Array<PackageInfo> = []
+  for (const globPattern of globPatterns) {
+    packages = packages.concat(await parseGlobPackages(directory, globPattern))
   }
+  return packages
+}
+
+export interface LernaExecScope {
+  nodeScope: boolean
+  phpScope: boolean
 }
 
 export async function lerna(directory: string) {
-  const context = await initContext(directory)
+  const packages = await parsePackages(directory)
+  const phpPackages = packages.filter((packageInfo: PackageInfo) => packageInfo.type === PackageType.PHP)
+  const nodePackages = packages.filter((packageInfo: PackageInfo) => packageInfo.type === PackageType.NODE)
 
-  async function preparePhpPackage(composerFilePath: string) {
-    const composerContent = await openJsonFile(composerFilePath)
-    const composerPackageDirectory = path.dirname(composerFilePath)
+  async function preparePhpPackage(packageInfo: PackageInfo) {
     const fakePackage = {
-      name: composerContent.name.startsWith('@') ? composerContent.name : `@${composerContent.name}`,
-      version: composerContent.version,
+      name: packageInfo.name.startsWith('@') ? packageInfo.name : `@${packageInfo.name}`,
+      version: packageInfo.version,
       private: true,
-      scripts: composerContent.scripts || {},
+      scripts: packageInfo.scripts || {},
     }
-    const fakePackagePath = path.join(composerPackageDirectory, PACKAGE_FILENAME)
-    await createJsonFile(fakePackagePath, fakePackage)
+    await createJsonFile(packageInfo.packageFilePath, fakePackage)
   }
 
   async function preparePhpPackages() {
-    for (const composerFilePath of context.composerFilePaths) {
-      await preparePhpPackage(composerFilePath)
+    for (const packageInfo of phpPackages) {
+      await preparePhpPackage(packageInfo)
     }
   }
 
   async function cleanPhpPackages() {
-    for (const composerFilePath of context.composerFilePaths) {
-      const packageFilePath = composerFilePath.replace(COMPOSER_FILENAME, PACKAGE_FILENAME)
-      await deleteFile(packageFilePath)
+    for (const packageInfo of phpPackages) {
+      await deleteFile(packageInfo.packageFilePath)
     }
   }
 
-  async function exec(args: Array<string>) {
-    await preparePhpPackages()
-    const lernaCommand = `cd ${directory} && npx lerna ${args.join(' ')}`
+  async function exec(args: Array<string>, lernaScope: LernaExecScope) {
+    await (lernaScope.phpScope ? preparePhpPackages() : cleanPhpPackages())
+    const filterPackagesArgs = lernaScope.nodeScope
+      ? []
+      : nodePackages.map((nodePackage) => `--ignore ${nodePackage.name}`)
+    const lernaCommand = `cd ${directory} && npx lerna ${args.concat(filterPackagesArgs).join(' ')}`
     await executeCommand(lernaCommand)
     await cleanPhpPackages()
   }
 
   async function install() {
-    for (const composerFilePath of context.composerFilePaths) {
-      const composerPackageDirectory = path.dirname(composerFilePath)
-      const lernaCommand = `cd ${composerPackageDirectory} && composer install --ansi`
+    for (const packageInfo of phpPackages) {
+      const lernaCommand = `cd ${packageInfo.path} && composer install --ansi`
       await executeCommand(lernaCommand)
     }
   }
