@@ -14,6 +14,6 @@
   },
   "devDependencies": {
     "lerna": "^7.1.5",
-    "cross-lerna": "^1.0.2"
+    "cross-lerna": "^1.1.0"
   }
 }
